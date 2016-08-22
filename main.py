@@ -1,25 +1,107 @@
-#!/usr/bin/env python
-#
-# Copyright 2007 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
 import webapp2
+import cgi
+
+def encrypt(text, rot):
+	encrypted = ''
+	for char in text:
+		alphabet = 'abcdefghijklmnopqrstuvwxyz'
+
+		if char in alphabet:
+			rotated_index = alphabet.index(char) + rot
+			if rotated_index < 26:
+				encrypted = encrypted + alphabet[rotated_index]
+			else:
+				encrypted = encrypted + alphabet[rotated_index % 26]
+		else:
+			alphabet = alphabet.upper()
+			if char in alphabet:
+				rotated_index = alphabet.index(char) + rot
+				if rotated_index < 26:
+					encrypted = encrypted + alphabet[rotated_index]
+				else:
+					encrypted = encrypted + alphabet[rotated_index % 26]
+			elif char == ' ':
+				encrypted = encrypted + ' '
+			else:
+				encrypted = encrypted + char
+	return encrypted
+
+header = """
+<HTML>
+	<head>
+		<style>
+            form {
+                background-color: #eee;
+                padding: 20px;
+                margin: 0 auto;
+                width: 540px;
+                font: 16px sans-serif;
+                border-radius: 10px;
+            }
+            textarea {
+                margin: 10px 0;
+                width: 540px;
+                height: 120px;
+            }
+            .error {
+                color: red;
+            }
+		</style>
+	</head>
+	<body>
+		<form action="/rotate" method="post">
+			<br>
+    		<label for="rot13">Rotate by:</value>
+    		<input type="text" name="rot" value = "13">
+    		<br>
+    		<textarea type="text" name="text">
+"""
+
+close_header = """
+    		</textarea>
+    		<input type="submit" value="Rotate">  
+"""
+
+footer = """
+    	</form>
+	</body>
+</HTML>
+"""
 
 class MainHandler(webapp2.RequestHandler):
+    """	
+    Rotate text input using caeser method
+    """
+
     def get(self):
-        self.response.write('Hello world!')
+    	#printself = "<p>" + self.request.get("text") + "</p>"
+    	#printresponse = header + printself + footer
+
+    	rot_form = header + close_header + footer	
+
+        self.response.write(rot_form)
+
+class Rotate(webapp2.RequestHandler):
+
+	def post(self):
+		rot = self.request.get("rot")
+
+		if not rot.isdigit():
+			error_text = """
+			<div class="error">
+				<p>Invalid Rotate Number</p>
+			</div>
+			"""
+			rot_form = header + self.request.get("text") + close_header + error_text + footer
+		else:
+			rot = int(rot)
+			encrypted_text = encrypt(self.request.get("text"), rot)
+			escaped_text = cgi.escape(encrypted_text)
+			rot_form = header + encrypted_text + close_header + footer
+
+		self.response.write(rot_form)
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/rotate', Rotate),
 ], debug=True)
