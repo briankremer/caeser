@@ -92,12 +92,12 @@ class Rotate(webapp2.RequestHandler):
 				<p>Invalid Rotate Number</p>
 			</div>
 			"""
-			rot_form = header + self.request.get("text") + close_header + error_text + footer
+			rot_form = header + cgi.escape(self.request.get("text"), quote=True) + close_header + error_text + footer
 		else:
 			rot = int(rot)
-			encrypted_text = encrypt(self.request.get("text"), rot)
-			escaped_text = cgi.escape(encrypted_text)
-			rot_form = header + encrypted_text + close_header + footer
+			encrypted_text = encrypt(cgi.escape(self.request.get("text"), quote=True), rot)
+			escaped_text = cgi.escape(encrypted_text, quote=True)
+			rot_form = header + escaped_text + close_header + footer
 
 		self.response.write(rot_form)
 
